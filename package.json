@@ -11,6 +11,8 @@
   "description": "",
   "dependencies": {
     "@google-cloud/bigquery": "^8.1.1",
-    "express": "^5.1.0"
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mysql2": "^3.6.5"
   }
 }
