@@ -28,7 +28,7 @@ app.get('/working-hours', async (req, res) => {
 // Route to process conversation summary with working hours
 app.post('/process-conversation-summary', async (req, res) => {
   try {
-    const { userId, orgId, useSimpleQuery = true } = req.body;
+    const { userId, orgId, useSimpleQuery = false } = req.body;
     
     if (!userId || !orgId) {
       return res.status(400).json({ 
