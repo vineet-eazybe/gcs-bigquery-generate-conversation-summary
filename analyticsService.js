@@ -20,6 +20,22 @@ class AnalyticsService {
     }
   }
 
+  // get user mapping from mysql for an array of user ids and org ids
+  async getUserMapping() {
+    try {
+      if (!this.mysqlConn) {
+        await this.connectToMySQL();
+      }
+      
+      const query = `SELECT user_id, team_id, org_id FROM callyzer_user_mappings`;
+      const [rows] = await this.mysqlConn.execute(query);
+      return rows;
+    } catch (error) {
+      console.error('Error fetching user mapping:', error);
+      throw error;
+    }
+  }
+
   async getWorkingHours() {
     try {
       if (!this.mysqlConn) {
@@ -33,6 +49,7 @@ class AnalyticsService {
       throw error;
     }
   }
+
 
   async closeConnection() {
     if (this.mysqlConn) {

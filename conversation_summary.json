@@ -1,0 +1,94 @@
+[
+    {
+      "name": "uid",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "User ID from the message_events table"
+    },
+    {
+      "name": "org_id",
+      "type": "STRING",
+      "mode": "REQUIRED",
+      "description": "Organization ID from the message_events table"
+    },
+    {
+      "name": "date",
+      "type": "DATE",
+      "mode": "REQUIRED",
+      "description": "Date of the conversation summary, derived from message_timestamp"
+    },
+    {
+      "name": "phone_number",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Sender phone number for all chats"
+    },
+    {
+      "name": "analytics",
+      "type": "RECORD",
+      "mode": "REQUIRED",
+      "description": "Aggregated analytics for the conversation",
+      "fields": [
+        {
+          "name": "messages_sent",
+          "type": "INTEGER",
+          "mode": "NULLABLE",
+          "description": "The total number of messages sent to a contact by an employee."
+        },
+        {
+          "name": "messages_received",
+          "type": "INTEGER",
+          "mode": "NULLABLE",
+          "description": "The total number of messages received from a contact."
+        },
+        {
+          "name": "total_messages",
+          "type": "INTEGER",
+          "mode": "NULLABLE",
+          "description": "The sum of all messages exchanged with a contact."
+        },
+        {
+          "name": "unique_messages",
+          "type": "INTEGER",
+          "mode": "NULLABLE",
+          "description": "Count of unique message IDs in the conversation"
+        },
+        {
+          "name": "number_of_follow_ups",
+          "type": "INTEGER",
+          "mode": "NULLABLE",
+          "description": "The total count of follow-up messages sent to a contact."
+        }
+      ]
+    },
+    {
+      "name": "average_response_time",
+      "type": "FLOAT64",
+      "mode": "NULLABLE",
+      "description": "The average time it takes for an employee to respond to a contact's message, in seconds."
+    },
+    {
+      "name": "conversation_starter",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Identifies who initiated the conversation (e.g., 'employee' or 'contact')."
+    },
+    {
+      "name": "last_message_from",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Indicates who was the last person to send a message (e.g., 'employee' or 'contact')."
+    },
+    {
+      "name": "updated_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Timestamp when the summary row was last updated"
+    },
+    {
+      "name": "created_at",
+      "type": "TIMESTAMP",
+      "mode": "REQUIRED",
+      "description": "Timestamp when the summary row was first created (based on earliest message)"
+    }
+  ]
