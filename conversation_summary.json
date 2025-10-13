@@ -12,10 +12,10 @@
       "description": "Organization ID from the message_events table"
     },
     {
-      "name": "date",
-      "type": "DATE",
+      "name": "chat_id",
+      "type": "STRING",
       "mode": "REQUIRED",
-      "description": "Date of the conversation summary, derived from message_timestamp"
+      "description": "Unique identifier for the conversation/chat"
     },
     {
       "name": "phone_number",
@@ -63,7 +63,7 @@
     },
     {
       "name": "average_response_time",
-      "type": "FLOAT64",
+      "type": "FLOAT",
       "mode": "NULLABLE",
       "description": "The average time it takes for an employee to respond to a contact's message, in seconds."
     },

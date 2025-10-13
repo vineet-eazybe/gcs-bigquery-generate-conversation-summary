@@ -14,5 +14,6 @@
     {"name": "file_url", "type": "STRING", "mode": "NULLABLE"},
     {"name": "is_broadcast", "type": "BOOLEAN", "mode": "NULLABLE"},
     {"name": "special_data", "type": "JSON", "mode": "NULLABLE"},
-    {"name": "word_count", "type": "INTEGER", "mode": "NULLABLE"}
+    {"name": "word_count", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "agent_phone_number", "type": "STRING", "mode": "NULLABLE"}
   ]  

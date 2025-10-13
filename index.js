@@ -5,9 +5,8 @@ require('dotenv').config();
 const app = express();
 const analyticsService = new AnalyticsService();
 const bigQueryService = new BigQueryService();
-
 // Middleware
-app.use(express.json());
+app.use(express.json());  
 
 app.get('/user-mapping', async (req, res) => {
   const userMapping = await analyticsService.getUserMapping();
@@ -25,33 +24,7 @@ app.get('/working-hours', async (req, res) => {
   }
 });
 
-// Route to process conversation summary with working hours
-app.post('/process-conversation-summary', async (req, res) => {
-  try {
-    const { userId, orgId, useSimpleQuery = false } = req.body;
-    
-    if (!userId || !orgId) {
-      return res.status(400).json({ 
-        error: 'userId and orgId are required' 
-      });
-    }
 
-    const result = await bigQueryService.processConversationSummary(userId, orgId, useSimpleQuery);
-    res.json({
-      success: true,
-      message: 'Conversation summary processed successfully',
-      jobId: result.jobId,
-      rowsProcessed: result.rows.length,
-      queryType: useSimpleQuery ? 'simple' : 'advanced'
-    });
-  } catch (error) {
-    console.error('Error in /process-conversation-summary route:', error);
-    res.status(500).json({ 
-      error: 'Failed to process conversation summary',
-      details: error.message 
-    });
-  }
-});
 
 // Route to get working hours configuration for a specific user/org
 app.get('/working-hours-config/:userId/:orgId', async (req, res) => {
@@ -71,7 +44,7 @@ app.get('/working-hours-config/:userId/:orgId', async (req, res) => {
 // Route to get all working hours configurations for all users
 app.get('/all-working-hours-config', async (req, res) => {
   try {
-    const configs = await bigQueryService.getAllWorkingHoursConfig();
+    const configs = await analyticsService.getAllWorkingHoursConfig();
     res.json({
       success: true,
       count: configs.length,
@@ -94,7 +67,8 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
