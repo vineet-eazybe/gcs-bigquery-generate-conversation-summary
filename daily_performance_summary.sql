@@ -4,7 +4,7 @@
 -- 1. Corrected day-of-week mapping (2=Monday, 3=Tuesday, etc. per BigQuery DAYOFWEEK)
 -- 2. Added org_id to MERGE ON condition to prevent "multiple source rows" error
 -- 3. Added org_id to GROUP BY in daily_aggregates for proper user/org separation
--- 4. Timezone support already in place (AT TIME ZONE 'Asia/Kolkata')
+-- 4. All calculations performed in UTC to match UTC-stored working hours
 --
 -- Last updated: October 2025
 
@@ -15,8 +15,8 @@ WITH
 daily_events AS (
 SELECT
 *,
-DATE(message_timestamp, 'Asia/Kolkata') AS activity_date,
-EXTRACT(DAYOFWEEK FROM message_timestamp AT TIME ZONE 'Asia/Kolkata') AS day_of_week
+DATE(message_timestamp) AS activity_date,
+EXTRACT(DAYOFWEEK FROM message_timestamp) AS day_of_week
 FROM
 `waba-454907.whatsapp_analytics.message_events`
 ),
