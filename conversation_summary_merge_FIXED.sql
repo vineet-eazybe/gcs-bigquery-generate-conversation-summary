@@ -3,9 +3,9 @@
 -- 
 -- FIXES APPLIED:
 -- 1. Corrected day-of-week mapping (2=Monday, 3=Tuesday, etc. per BigQuery DAYOFWEEK)
--- 2. Added timezone support to match Asia/Kolkata throughout
+-- 2. All calculations performed in UTC to match UTC-stored working hours
 -- 3. Refactored to use CTE for response time calculation (better performance)
--- 4. UDF now handles timezone-aware comparisons and detects invalid working hours
+-- 4. UDF now handles UTC comparisons correctly
 --
 -- NOTE: During testing, MERGE showed some evaluation quirks. If you experience
 -- incorrect values, use conversation_summary_upsert_DELETE_INSERT.sql instead.
@@ -17,8 +17,8 @@ WITH
 events_with_day AS (
   SELECT
     *,
-    -- Extract day of week in Asia/Kolkata timezone (1=Sun, 2=Mon, 3=Tue, etc.)
-    EXTRACT(DAYOFWEEK FROM message_timestamp AT TIME ZONE 'Asia/Kolkata') AS day_of_week
+    -- Extract day of week in UTC timezone (1=Sun, 2=Mon, 3=Tue, etc.)
+    EXTRACT(DAYOFWEEK FROM message_timestamp) AS day_of_week
   FROM
     `waba-454907.whatsapp_analytics.message_events`
   WHERE user_id IS NOT NULL  -- Filter out messages without user_id
