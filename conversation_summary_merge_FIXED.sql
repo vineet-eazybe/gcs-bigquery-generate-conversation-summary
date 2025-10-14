@@ -68,35 +68,42 @@ response_events AS (
   WHERE
     events.direction = 'OUTGOING' AND events.prev_direction = 'INCOMING'
 ),
--- Calculate average response time per chat PER USER (using CTE instead of scalar subquery)
-response_time_by_chat AS (
+-- Calculate working seconds for each response event
+response_with_working_seconds AS (
   SELECT
     re.chat_id,
     re.user_id,
     re.org_id,
-    AVG(
-      `waba-454907.whatsapp_analytics.calculate_working_seconds_sql`(
-        re.prev_message_timestamp,
-        re.message_timestamp,
-        COALESCE(wh.monday_start, TIME(0, 0, 0)),
-        COALESCE(wh.monday_end, TIME(0, 0, 0)),
-        COALESCE(wh.tuesday_start, TIME(0, 0, 0)),
-        COALESCE(wh.tuesday_end, TIME(0, 0, 0)),
-        COALESCE(wh.wednesday_start, TIME(0, 0, 0)),
-        COALESCE(wh.wednesday_end, TIME(0, 0, 0)),
-        COALESCE(wh.thursday_start, TIME(0, 0, 0)),
-        COALESCE(wh.thursday_end, TIME(0, 0, 0)),
-        COALESCE(wh.friday_start, TIME(0, 0, 0)),
-        COALESCE(wh.friday_end, TIME(0, 0, 0)),
-        COALESCE(wh.saturday_start, TIME(0, 0, 0)),
-        COALESCE(wh.saturday_end, TIME(0, 0, 0)),
-        COALESCE(wh.sunday_start, TIME(0, 0, 0)),
-        COALESCE(wh.sunday_end, TIME(0, 0, 0))
-      )
-    ) AS average_response_time
+    `waba-454907.whatsapp_analytics.calculate_working_seconds_sql`(
+      re.prev_message_timestamp,
+      re.message_timestamp,
+      COALESCE(wh.monday_start, TIME(0, 0, 0)),
+      COALESCE(wh.monday_end, TIME(0, 0, 0)),
+      COALESCE(wh.tuesday_start, TIME(0, 0, 0)),
+      COALESCE(wh.tuesday_end, TIME(0, 0, 0)),
+      COALESCE(wh.wednesday_start, TIME(0, 0, 0)),
+      COALESCE(wh.wednesday_end, TIME(0, 0, 0)),
+      COALESCE(wh.thursday_start, TIME(0, 0, 0)),
+      COALESCE(wh.thursday_end, TIME(0, 0, 0)),
+      COALESCE(wh.friday_start, TIME(0, 0, 0)),
+      COALESCE(wh.friday_end, TIME(0, 0, 0)),
+      COALESCE(wh.saturday_start, TIME(0, 0, 0)),
+      COALESCE(wh.saturday_end, TIME(0, 0, 0)),
+      COALESCE(wh.sunday_start, TIME(0, 0, 0)),
+      COALESCE(wh.sunday_end, TIME(0, 0, 0))
+    ) AS working_seconds
   FROM response_events re 
   LEFT JOIN user_working_hours wh ON re.user_id = wh.user_id AND re.org_id = wh.org_id
-  GROUP BY re.chat_id, re.user_id, re.org_id
+),
+-- Calculate average response time per chat PER USER (only count responses within working hours)
+response_time_by_chat AS (
+  SELECT
+    chat_id,
+    user_id,
+    org_id,
+    AVG(CASE WHEN working_seconds > 0 THEN working_seconds END) AS average_response_time
+  FROM response_with_working_seconds
+  GROUP BY chat_id, user_id, org_id
 ),
 -- Aggregate conversation metrics PER USER
 chat_aggregates AS (

@@ -1,3 +1,13 @@
+-- FIXED MERGE statement for daily_performance_summary table
+-- 
+-- FIXES APPLIED:
+-- 1. Corrected day-of-week mapping (2=Monday, 3=Tuesday, etc. per BigQuery DAYOFWEEK)
+-- 2. Added org_id to MERGE ON condition to prevent "multiple source rows" error
+-- 3. Added org_id to GROUP BY in daily_aggregates for proper user/org separation
+-- 4. Timezone support already in place (AT TIME ZONE 'Asia/Kolkata')
+--
+-- Last updated: October 2025
+
 MERGE INTO `waba-454907.whatsapp_analytics.daily_performance_summary` AS T
 USING (
 -- This subquery calculates all daily conversation metrics
@@ -19,24 +29,25 @@ FROM
 daily_events
 ),
 -- Collect working hours data for each user/org combination
+-- CORRECT mapping: BigQuery DAYOFWEEK returns 1=Sunday, 2=Monday, 3=Tuesday, etc.
 user_working_hours AS (
 SELECT
 user_id,
 org_id,
-MAX(CASE WHEN day_of_week = 1 THEN start_time_utc END) AS monday_start,
-MAX(CASE WHEN day_of_week = 1 THEN end_time_utc END) AS monday_end,
-MAX(CASE WHEN day_of_week = 2 THEN start_time_utc END) AS tuesday_start,
-MAX(CASE WHEN day_of_week = 2 THEN end_time_utc END) AS tuesday_end,
-MAX(CASE WHEN day_of_week = 3 THEN start_time_utc END) AS wednesday_start,
-MAX(CASE WHEN day_of_week = 3 THEN end_time_utc END) AS wednesday_end,
-MAX(CASE WHEN day_of_week = 4 THEN start_time_utc END) AS thursday_start,
-MAX(CASE WHEN day_of_week = 4 THEN end_time_utc END) AS thursday_end,
-MAX(CASE WHEN day_of_week = 5 THEN start_time_utc END) AS friday_start,
-MAX(CASE WHEN day_of_week = 5 THEN end_time_utc END) AS friday_end,
-MAX(CASE WHEN day_of_week = 6 THEN start_time_utc END) AS saturday_start,
-MAX(CASE WHEN day_of_week = 6 THEN end_time_utc END) AS saturday_end,
-MAX(CASE WHEN day_of_week = 7 THEN start_time_utc END) AS sunday_start,
-MAX(CASE WHEN day_of_week = 7 THEN end_time_utc END) AS sunday_end
+MAX(CASE WHEN day_of_week = 2 THEN start_time_utc END) AS monday_start,
+MAX(CASE WHEN day_of_week = 2 THEN end_time_utc END) AS monday_end,
+MAX(CASE WHEN day_of_week = 3 THEN start_time_utc END) AS tuesday_start,
+MAX(CASE WHEN day_of_week = 3 THEN end_time_utc END) AS tuesday_end,
+MAX(CASE WHEN day_of_week = 4 THEN start_time_utc END) AS wednesday_start,
+MAX(CASE WHEN day_of_week = 4 THEN end_time_utc END) AS wednesday_end,
+MAX(CASE WHEN day_of_week = 5 THEN start_time_utc END) AS thursday_start,
+MAX(CASE WHEN day_of_week = 5 THEN end_time_utc END) AS thursday_end,
+MAX(CASE WHEN day_of_week = 6 THEN start_time_utc END) AS friday_start,
+MAX(CASE WHEN day_of_week = 6 THEN end_time_utc END) AS friday_end,
+MAX(CASE WHEN day_of_week = 7 THEN start_time_utc END) AS saturday_start,
+MAX(CASE WHEN day_of_week = 7 THEN end_time_utc END) AS saturday_end,
+MAX(CASE WHEN day_of_week = 1 THEN start_time_utc END) AS sunday_start,
+MAX(CASE WHEN day_of_week = 1 THEN end_time_utc END) AS sunday_end
 FROM
 `waba-454907.whatsapp_analytics.working_hours`
 GROUP BY user_id, org_id
@@ -60,9 +71,9 @@ daily_aggregates AS (
 SELECT
 activity_date,
 user_id,
+org_id,
 agent_phone_number,
 chat_id AS contact_id,
-MAX(org_id) as org_id,
 ARRAY_AGG(STRUCT(direction) ORDER BY message_timestamp ASC LIMIT 1)[OFFSET(0)].direction AS starter_direction,
 COUNTIF(direction = 'INCOMING') AS contact_message_count,
 COUNTIF(direction = 'OUTGOING') AS agent_message_count,
@@ -72,7 +83,7 @@ FROM
 events_with_daily_lag
 WHERE user_id IS NOT NULL
 GROUP BY
-activity_date, user_id, chat_id, agent_phone_number
+activity_date, user_id, org_id, chat_id, agent_phone_number
 )
 -- Final combination of all metrics
 SELECT
@@ -84,12 +95,29 @@ agg.org_id,
 IF(agg.starter_direction = 'OUTGOING', 'agent', 'contact') AS conversation_starter_of_day,
 agg.agent_message_count,
 agg.contact_message_count,
--- Calculate average response time using working hours UDF
+-- Calculate average response time using working hours UDF (only count responses within working hours)
 (SELECT 
-  CASE 
-    WHEN COUNT(*) = 0 THEN NULL
-    ELSE AVG(
-      `waba-454907.whatsapp_analytics.calculate_working_seconds_sql`(
+  AVG(
+    CASE 
+      WHEN `waba-454907.whatsapp_analytics.calculate_working_seconds_sql`(
+        re.prev_message_timestamp,
+        re.message_timestamp,
+        COALESCE(wh.monday_start, TIME(0, 0, 0)),
+        COALESCE(wh.monday_end, TIME(0, 0, 0)),
+        COALESCE(wh.tuesday_start, TIME(0, 0, 0)),
+        COALESCE(wh.tuesday_end, TIME(0, 0, 0)),
+        COALESCE(wh.wednesday_start, TIME(0, 0, 0)),
+        COALESCE(wh.wednesday_end, TIME(0, 0, 0)),
+        COALESCE(wh.thursday_start, TIME(0, 0, 0)),
+        COALESCE(wh.thursday_end, TIME(0, 0, 0)),
+        COALESCE(wh.friday_start, TIME(0, 0, 0)),
+        COALESCE(wh.friday_end, TIME(0, 0, 0)),
+        COALESCE(wh.saturday_start, TIME(0, 0, 0)),
+        COALESCE(wh.saturday_end, TIME(0, 0, 0)),
+        COALESCE(wh.sunday_start, TIME(0, 0, 0)),
+        COALESCE(wh.sunday_end, TIME(0, 0, 0))
+      ) > 0
+      THEN `waba-454907.whatsapp_analytics.calculate_working_seconds_sql`(
         re.prev_message_timestamp,
         re.message_timestamp,
         COALESCE(wh.monday_start, TIME(0, 0, 0)),
@@ -107,8 +135,8 @@ agg.contact_message_count,
         COALESCE(wh.sunday_start, TIME(0, 0, 0)),
         COALESCE(wh.sunday_end, TIME(0, 0, 0))
       )
-    )
-  END
+    END
+  )
 FROM response_events re 
 LEFT JOIN user_working_hours wh ON re.user_id = wh.user_id AND re.org_id = wh.org_id
 WHERE re.user_id = agg.user_id AND re.chat_id = agg.contact_id AND re.activity_date = agg.activity_date
@@ -145,6 +173,7 @@ daily_aggregates agg
 ) AS S
 ON T.activity_date = S.activity_date 
    AND T.user_id = S.user_id 
+   AND T.org_id = S.org_id
    AND T.contact_id = S.contact_id
    AND T.user_number = S.agent_phone_number
 WHEN MATCHED THEN UPDATE SET 
