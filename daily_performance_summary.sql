@@ -78,7 +78,9 @@ ARRAY_AGG(STRUCT(direction) ORDER BY message_timestamp ASC LIMIT 1)[OFFSET(0)].d
 COUNTIF(direction = 'INCOMING') AS contact_message_count,
 COUNTIF(direction = 'OUTGOING') AS agent_message_count,
 MIN(IF(direction = 'INCOMING', message_timestamp, NULL)) AS first_contact_message_ts,
-MIN(IF(direction = 'OUTGOING', message_timestamp, NULL)) AS first_agent_message_ts
+MIN(IF(direction = 'OUTGOING', message_timestamp, NULL)) AS first_agent_message_ts,
+COUNT(DISTINCT message_id) AS unique_messages,
+COUNTIF(direction = 'OUTGOING' AND prev_direction = 'OUTGOING') AS follow_up_count
 FROM
 events_with_daily_lag
 WHERE user_id IS NOT NULL
@@ -92,9 +94,17 @@ agg.user_id,
 agg.contact_id,
 agg.agent_phone_number,
 agg.org_id,
-IF(agg.starter_direction = 'OUTGOING', 'agent', 'contact') AS conversation_starter_of_day,
+IF(agg.starter_direction = 'OUTGOING', 'employee', 'contact') AS conversation_starter_of_day,
 agg.agent_message_count,
 agg.contact_message_count,
+-- Analytics record structure
+STRUCT(
+  agg.agent_message_count AS messages_sent,
+  agg.contact_message_count AS messages_received,
+  (agg.agent_message_count + agg.contact_message_count) AS total_messages,
+  agg.unique_messages,
+  agg.follow_up_count AS number_of_follow_ups
+) AS analytics,
 -- Calculate average response time using working hours UDF (only count responses within working hours)
 (SELECT 
   AVG(
@@ -183,6 +193,7 @@ WHEN MATCHED THEN UPDATE SET
     T.contact_message_count = S.contact_message_count,
     T.avg_agent_response_time_seconds = S.avg_agent_response_time_seconds,
     T.time_to_first_response_seconds = S.time_to_first_response_seconds,
+    T.analytics = S.analytics,
     T.updated_at = CURRENT_TIMESTAMP()
 WHEN NOT MATCHED THEN INSERT (
     activity_date,
@@ -195,6 +206,7 @@ WHEN NOT MATCHED THEN INSERT (
     contact_message_count,
     avg_agent_response_time_seconds,
     time_to_first_response_seconds,
+    analytics,
     created_at,
     updated_at
 ) VALUES (
@@ -208,6 +220,7 @@ WHEN NOT MATCHED THEN INSERT (
     S.contact_message_count,
     S.avg_agent_response_time_seconds,
     S.time_to_first_response_seconds,
+    S.analytics,
     CURRENT_TIMESTAMP(),
     CURRENT_TIMESTAMP()
 );

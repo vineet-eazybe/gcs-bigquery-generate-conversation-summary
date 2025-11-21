@@ -1,75 +1,112 @@
 [
-    {
-      "name": "activity_date",
-      "type": "DATE",
-      "mode": "REQUIRED",
-      "description": "The activity date (partition key). Each row summarizes metrics for this day."
-    },
-    {
-      "name": "user_id",
-      "type": "STRING",
-      "mode": "REQUIRED",
-      "description": "Unique identifier of the agent/user handling the conversation."
-    },
-    {
-      "name": "user_number",
-      "type": "STRING",
-      "mode": "NULLABLE",
-      "description": "Phone number associated with the user/agent."
-    },
-    {
-      "name": "contact_id",
-      "type": "STRING",
-      "mode": "REQUIRED",
-      "description": "Phone number of the contact (customer)."
-    },
-    {
-      "name": "org_id",
-      "type": "INTEGER",
-      "mode": "NULLABLE",
-      "description": "Organization identifier for the user."
-    },
-    {
-      "name": "conversation_starter_of_day",
-      "type": "STRING",
-      "mode": "NULLABLE",
-      "description": "Indicates who started the first conversation of the day: 'agent' or 'contact'."
-    },
-    {
-      "name": "agent_message_count",
-      "type": "INTEGER",
-      "mode": "NULLABLE",
-      "description": "Number of outbound messages sent by the agent on this date."
-    },
-    {
-      "name": "contact_message_count",
-      "type": "INTEGER",
-      "mode": "NULLABLE",
-      "description": "Number of inbound messages received from the contact on this date."
-    },
-    {
-      "name": "avg_agent_response_time_seconds",
-      "type": "FLOAT",
-      "mode": "NULLABLE",
-      "description": "Average agent response time in business seconds (between inbound and outbound messages)."
-    },
-    {
-      "name": "time_to_first_response_seconds",
-      "type": "FLOAT",
-      "mode": "NULLABLE",
-      "description": "Time in business seconds from first inbound message to the first outbound agent response."
-    },
-    {
-      "name": "created_at",
-      "type": "TIMESTAMP",
-      "mode": "NULLABLE",
-      "description": "Timestamp when the record was first created."
-    },
-    {
-      "name": "updated_at",
-      "type": "TIMESTAMP",
-      "mode": "NULLABLE",
-      "description": "Timestamp when the record was last updated."
-    }
-  ]
-  
+  {
+    "name": "activity_date",
+    "type": "DATE",
+    "mode": "REQUIRED",
+    "description": "The activity date (partition key). Each row summarizes metrics for this day."
+  },
+  {
+    "name": "user_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Unique identifier of the agent/user handling the conversation."
+  },
+  {
+    "name": "user_number",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Phone number associated with the user/agent."
+  },
+  {
+    "name": "contact_id",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Phone number of the contact (customer)."
+  },
+  {
+    "name": "org_id",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Organization identifier for the user."
+  },
+  {
+    "name": "conversation_starter_of_day",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Indicates who started the first conversation of the day: 'agent' or 'contact'."
+  },
+  {
+    "name": "agent_message_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of outbound messages sent by the agent on this date."
+  },
+  {
+    "name": "contact_message_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of inbound messages received from the contact on this date."
+  },
+  {
+    "name": "avg_agent_response_time_seconds",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Average agent response time in business seconds (between inbound and outbound messages)."
+  },
+  {
+    "name": "time_to_first_response_seconds",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Time in business seconds from first inbound message to the first outbound agent response."
+  },
+  {
+    "name": "created_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when the record was first created."
+  },
+  {
+    "name": "updated_at",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp when the record was last updated."
+  },
+  {
+    "name": "analytics",
+    "type": "RECORD",
+    "mode": "NULLABLE",
+    "description": "Aggregated analytics for the conversation",
+    "fields": [
+      {
+        "name": "messages_sent",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "The total number of messages sent to a contact by an employee."
+      },
+      {
+        "name": "messages_received",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "The total number of messages received from a contact."
+      },
+      {
+        "name": "total_messages",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "The sum of all messages exchanged with a contact."
+      },
+      {
+        "name": "unique_messages",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "Count of unique message IDs in the conversation."
+      },
+      {
+        "name": "number_of_follow_ups",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "The total count of follow-up messages sent to a contact."
+      }
+    ]
+  }
+]
